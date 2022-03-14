@@ -6,12 +6,17 @@ import requests
 import re
 import sys
 import csv
+import os
 
 URL_MAIN = 'https://extensions.ckan.org'
+DATA_DIRECTORY = f"data/{sys.argv[0].split('/')[-1]}"
 
-datas_lst = []
 
 def get_ckan():
+
+    os.makedirs(DATA_DIRECTORY, exist_ok=True)
+
+    datas_lst = []
 
     res = requests.get(URL_MAIN)
 
@@ -70,11 +75,10 @@ def get_ckan():
         datas_lst[0] = _
         datas_lst[idx] = _
 
-    with open(f"{sys.argv[0].split('/')[-1]}.csv", 'w') as f:
+    with open(f"{DATA_DIRECTORY}/{sys.argv[0].split('/')[-1]}.csv", 'w') as f:
         dw = csv.DictWriter(f,fieldnames=list(datas_lst[0].keys()))
         dw.writeheader()
         dw.writerows(datas_lst) 
-
 
 
 if __name__ == "__main__":
