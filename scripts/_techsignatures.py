@@ -2,8 +2,9 @@
 [WIP] Find common technology signatures in hrefs 
 """
 
-import requests
 import re
+
+import requests
 
 SITES = """
 demo.ckan.org
@@ -59,8 +60,18 @@ data-test.toll.no;data.toll.no/*
 dadosabertos.tse.jus.br
 """
 
-def longest_common_substring(s1, s2):
-    
+
+def longest_common_substring(s1: str, s2: str) -> str:
+    """
+    longest_common_substring _summary_
+
+    :param s1: String A
+    :type s1: str
+    :param s2: String B
+    :type s2: str
+    :return: Longest String
+    :rtype: _type_
+    """
     m = [[0] * (1 + len(s2)) for _ in range(1 + len(s1))]
 
     longest, x_longest = 0, 0
@@ -75,33 +86,36 @@ def longest_common_substring(s1, s2):
             else:
                 m[x][y] = 0
 
-    return s1[x_longest - longest: x_longest]
+    return s1[x_longest - longest : x_longest]
 
 
-urls = [_.split(';') for _ in SITES.splitlines() if _ != '']
-urls = [f'http://{_}' for sublist in urls for _ in sublist]
+urls = [_.split(";") for _ in SITES.splitlines() if _ != ""]
+urls = [f"http://{_}" for sublist in urls for _ in sublist]
 
-href_re = re.compile('href=(?:"|\')?([^"|\']+)',flags=re.M) 
+href_re = re.compile("href=(?:\"|')?([^\"|']+)", flags=re.M)
 
 try:
     common_str = longest_common_substring(
-                    ' '.join(re.findall(href_re,requests.get(urls[0],verify=False).text)),
-                    ' '.join(re.findall(href_re,requests.get(urls[1],verify=False).text))
-                    )
+        " ".join(re.findall(href_re, requests.get(urls[0], verify=False).text)),
+        " ".join(re.findall(href_re, requests.get(urls[1], verify=False).text)),
+    )
 except:
-    print ('Something bad happened')
+    print("Something bad happened")
 
 
-urls_nocommon = [] ; urls_errs =[]
+urls_nocommon = []
+urls_errs = []
 
 for url in urls[2:]:
-    for url in url.split(';'):
+    for url in url.split(";"):
         try:
-            if except_url := re.search(common_str,requests.get(url,verify=False).text,re.M):
+            if except_url := re.search(
+                common_str, requests.get(url, verify=False).text, re.M
+            ):
                 urls_nocommon.append(url)
         except:
-                urls_errs.append(url)
+            urls_errs.append(url)
 
-print ('common_str',common_str)
-print ('urls_nocommon',urls_nocommon)
-print ('urls_errs',urls_errs)
+print("common_str", common_str)
+print("urls_nocommon", urls_nocommon)
+print("urls_errs", urls_errs)
