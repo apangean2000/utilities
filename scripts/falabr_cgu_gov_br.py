@@ -7,9 +7,9 @@ import json
 import os
 import re
 import sys
-import zipfile
 from pathlib import Path
-from typing import Type, Optional
+from typing import Type
+from zipfile import ZipFile
 
 import pandas as pd
 import requests
@@ -52,7 +52,7 @@ def create_dict_key(dct: dict, key: str, typ: Type = list) -> dict:
             dct[key] = []
 
     else:
-        raise Exception("Not implemented")
+        raise NotImplementedError()
 
     return dct
 
@@ -68,7 +68,7 @@ def get_data() -> None:
 
     txt_base = requests.get(f"{URL_BASE}/DownloadDadosLai.aspx").text
 
-    headers: Optional[list[str]] = []
+    headers: list[str] = []
     file_headers: dict = {}
 
     for _ in [
@@ -76,8 +76,9 @@ def get_data() -> None:
         "Dicionário de Dados de Solicitantes",
         "Dicionário de Dados dos Recursos e Reclamações",
     ]:
-
-        headers.append(re.search(f'href="([^"]+).+?{_}.*', txt_base).group(1))
+        data_re = re.search(f'href="([^"]+).+?{_}.*', txt_base)
+        if data_re:
+            headers.append(data_re.group(1))
 
     for _ in headers:
 
@@ -111,14 +112,14 @@ def get_data() -> None:
             f"https://dadosabertos-download.cgu.gov.br/FalaBR/Arquivos_FalaBR/Pedidos_csv_{year}.zip"
         ).content
 
-        z = zipfile.ZipFile(io.BytesIO(data))
+        z = ZipFile(io.BytesIO(data))
         z.extractall(f"{DATA_DIRECTORY}/Pedidos_csv")
 
         data = requests.get(
             f"https://dadosabertos-download.cgu.gov.br/FalaBR/Arquivos_FalaBR/Recursos_Reclamacoes_csv_{year}.zip"
         ).content
 
-        z = zipfile.ZipFile(io.BytesIO(data))
+        z = ZipFile(io.BytesIO(data))
         z.extractall(f"{DATA_DIRECTORY}/Recursos_Reclamacoes_csv")
 
 
@@ -175,8 +176,8 @@ def create_eda() -> None:
                     dfs = create_dict_key(dfs, filetype_yyyy)
                     dfs[filetype_yyyy].append(df)
 
-
     docs_dir = f"{DATA_DIRECTORY}/docs"
+
 
     os.makedirs(docs_dir, exist_ok=True)
 
@@ -191,10 +192,15 @@ def create_eda() -> None:
             plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
         )
 
-        profile.to_file(f"{docs_dir}/{_}.html")
+        file_html = f"{docs_dir}/{_}.html"
 
-        with open(f"{docs_dir}/{_}.json", 'w') as file:
-            json.dump(profile.to_json(), file)
+        profile.to_file(file_html)
+
+        with ZipFile(f"{docs_dir}/{date_str}.zip", "a") as zip:
+            zip.write(file_html)
+
+        with open(f"{docs_dir}/{_}.json", "w") as file_json:
+            json.dump(profile.to_json(), file_json)
 
 
 if __name__ == "__main__":
