@@ -25,6 +25,7 @@ repos:
       - id: isort
         files: '.*'
         args: [ --profile=black, --project=pandas_profiling ]
+# https://github.com/mgedmin/check-manifest/issues/103
 #-   repo: https://github.com/mgedmin/check-manifest
 #    rev: "0.47"
 #    hooks:

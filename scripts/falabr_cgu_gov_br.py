@@ -9,7 +9,7 @@ import re
 import sys
 import zipfile
 from pathlib import Path
-from typing import Type
+from typing import Type, Optional
 
 import pandas as pd
 import requests
@@ -68,7 +68,7 @@ def get_data() -> None:
 
     txt_base = requests.get(f"{URL_BASE}/DownloadDadosLai.aspx").text
 
-    headers: list[str] = []
+    headers: Optional[list[str]] = []
     file_headers: dict = {}
 
     for _ in [
@@ -128,6 +128,8 @@ def create_eda() -> None:
     """
 
     # If header file doesn't exist get data from website
+
+    os.makedirs(DATA_DIRECTORY, exist_ok=True)
 
     data_dict = f"{DATA_DIRECTORY}/data_dictionary.json"
 
