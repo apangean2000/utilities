@@ -191,7 +191,10 @@ def create_eda() -> None:
             plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
         )
 
-        profile.to_file(f"{docs_dir}/{_}.hmtl")
+        profile.to_file(f"{docs_dir}/{_}.html")
+
+        with open(f"{docs_dir}/{_}.json", 'w') as file:
+            json.dump(profile.to_json(), file)
 
 
 if __name__ == "__main__":
