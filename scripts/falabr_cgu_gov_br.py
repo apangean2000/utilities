@@ -175,7 +175,10 @@ def create_eda() -> None:
                     dfs = create_dict_key(dfs, filetype_yyyy)
                     dfs[filetype_yyyy].append(df)
 
-    os.makedirs(f"{DATA_DIRECTORY}/docs", exist_ok=True)
+
+    docs_dir = f"{DATA_DIRECTORY}/docs"
+
+    os.makedirs(docs_dir, exist_ok=True)
 
     for _ in tqdm(dfs):
 
@@ -188,7 +191,7 @@ def create_eda() -> None:
             plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
         )
 
-        profile.to_file(f"{DATA_DIRECTORY}/docs/{_}.hmtl")
+        profile.to_file(f"{docs_dir}/{_}.hmtl")
 
 
 if __name__ == "__main__":
