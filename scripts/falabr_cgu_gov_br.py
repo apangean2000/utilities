@@ -178,9 +178,10 @@ def create_eda() -> None:
 
                 df = pd.read_csv(
                     file,
+                    index_col=False,
+                    encoding="UTF-16",
                     names=names,
                     delimiter=";",
-                    encoding="UTF-16",
                     on_bad_lines="warn",
                     true_values=["Sim"],  # Grab these from locale or data dict?
                     false_values=["Não"],
