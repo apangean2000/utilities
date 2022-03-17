@@ -1,7 +1,6 @@
 """
 Analysis of data requests/complaints from interested parties at falabr.cgu.gov.br
 """
-# TODO remove id on stacking df's
 
 import io
 import json
@@ -217,7 +216,10 @@ def create_eda() -> None:
             title=f"Profile report of {_}, date {date_str}",
             explorative=True,
             # Use accessible palette
-            plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
+            plot={
+                "correlation": {"cmap": "viridis", "bad": "#000000"},
+                "missing": {"cmap": "viridis", "bad": "#000000"},
+            },
         )
 
         file_html = f"{docs_dir}/{_}.html"
