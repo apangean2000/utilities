@@ -1,14 +1,12 @@
 """
 Analysis of data requests/complaints from interested parties at falabr.cgu.gov.br
 """
-# TODO remove id on stacking df's
 
 import io
 import json
 import os
 import re
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Optional
 from zipfile import ZipFile
@@ -19,6 +17,8 @@ import requests
 from tqdm import tqdm
 
 from pandas_profiling import ProfileReport
+
+pd.options.display.width = 0
 
 URL_BASE = "https://falabr.cgu.gov.br/publico/DownloadDados/"
 DATA_DIRECTORY = f"data/{sys.argv[0].split('/')[-1]}"
@@ -125,9 +125,7 @@ def create_eda() -> None:
 
     dfs: dict = {}
 
-    # tz agnsotic at present though https://en.wikipedia.org/wiki/Time_in_Brazil
-
-    def dateparse(dates: list[str]) -> list[Optional[datetime]]:
+    def dateparse(dates: list[str]) -> list[Optional[np.datetime64]]:
         """
         Forgiving parse list to date type list
 
@@ -137,16 +135,18 @@ def create_eda() -> None:
         :rtype: list[Optional[datetime]]
         """
 
-        dates_out: list[Optional[datetime]] = []
+        dates_out: list[Optional[np.datetime64]] = []
 
         for idx, dat in enumerate(dates):
+
+            date_bit = f"{dat[6:10]}-{dat[3:5]}-{dat[0:2]}"
+            time_bit = dat[11:] if dat[11:] else "00:00:00"
+
             try:
-                dates_out.append(datetime.strptime(dat, "%d/%m/%Y %H:%M:%S"))
+                # tz agnsotic at present though https://en.wikipedia.org/wiki/Time_in_Brazil
+                dates_out.append(np.datetime64(f"{date_bit}T{time_bit}"))
             except ValueError:
-                try:
-                    dates_out.append(datetime.strptime(dat, "%d/%m/%Y"))
-                except ValueError:
-                    dates_out.append(np.nan)
+                dates_out.append(np.datetime64("NaT"))
 
         return dates_out
 
@@ -176,6 +176,7 @@ def create_eda() -> None:
                 # Hack for some ragged columns not spec'd in data dictionary, or with delimiter not enclosed with quoting
                 # """names.extend(["ragged1", "ragged2", "ragged3"])""""
                 # Added warn
+                # For _Pedidos_csv  file pattern looks like data dictionary columns don't align with csv's
 
                 df = pd.read_csv(
                     file,
@@ -209,13 +210,16 @@ def create_eda() -> None:
 
     for _ in tqdm(dfs):
 
-        df = pd.concat(dfs[_])
+        df = pd.concat(dfs[_], ignore_index=True)
         profile = ProfileReport(
             df,
             title=f"Profile report of {_}, date {date_str}",
             explorative=True,
             # Use accessible palette
-            plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
+            plot={
+                "correlation": {"cmap": "viridis", "bad": "#000000"},
+                "missing": {"cmap": "viridis", "bad": "#000000"},
+            },
         )
 
         file_html = f"{docs_dir}/{_}.html"
