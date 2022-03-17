@@ -47,7 +47,7 @@ def get_ckan() -> None:
         url = _.get("url")
         if re.search("http", url) is None:
             continue
-        print(url)
+
         res = requests.get(url)
         txt = res.text
 

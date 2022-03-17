@@ -34,7 +34,7 @@ lint:
 	pre-commit run --all-files
 
 clean:
-	git rm --cached `git ls-files -i --exclude-from=.gitignore`
+	git rm --cached `git ls-files -i -c --exclude-from=.gitignore`
 
 all:
 	make lint

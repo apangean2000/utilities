@@ -7,10 +7,12 @@ import json
 import os
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
-from typing import Type
+from typing import Optional
 from zipfile import ZipFile
 
+import numpy as np
 import pandas as pd
 import requests
 from tqdm import tqdm
@@ -21,40 +23,18 @@ URL_BASE = "https://falabr.cgu.gov.br/publico/DownloadDados/"
 DATA_DIRECTORY = f"data/{sys.argv[0].split('/')[-1]}"
 
 
-def clear_data(directory: Path) -> None:
+def clear_data(directory: str) -> None:
     """
     Clear data directory
     """
 
-    directory = Path(directory)
-    for item in directory.iterdir():
+    directory_p = Path(directory)
+
+    for item in directory_p.iterdir():
         if item.is_dir():
-            clear_data(item)
+            clear_data(str(item))
         else:
             item.unlink()
-
-
-def create_dict_key(dct: dict, key: str, typ: Type = list) -> dict:
-    """
-    dict_list _summary_
-
-    :param dct: _description_
-    :type dct: dict
-    :param key: _description_
-    :type key: str
-    :return: _description_
-    :rtype: dct
-    """
-
-    if typ == list:
-
-        if key not in dct:
-            dct[key] = []
-
-    else:
-        raise NotImplementedError()
-
-    return dct
 
 
 def get_data() -> None:
@@ -62,7 +42,7 @@ def get_data() -> None:
     get_data _summary_
     """
 
-    clear_data(Path(DATA_DIRECTORY))
+    clear_data(DATA_DIRECTORY)
 
     os.makedirs(DATA_DIRECTORY, exist_ok=True)
 
@@ -144,6 +124,31 @@ def create_eda() -> None:
 
     dfs: dict = {}
 
+    # tz agnsotic at present though https://en.wikipedia.org/wiki/Time_in_Brazil
+
+    def dateparse(dates: list[str]) -> list[Optional[datetime]]:
+        """
+        Forgiving parse list to date type list
+
+        :param dates: List of datetype strings
+        :type dates: list
+        :return: _description_
+        :rtype: list[Optional[datetime]]
+        """
+
+        dates_out: list[Optional[datetime]] = []
+
+        for idx, dat in enumerate(dates):
+            try:
+                dates_out.append(datetime.strptime(dat, "%d/%m/%Y %H:%M:%S"))
+            except ValueError:
+                try:
+                    dates_out.append(datetime.strptime(dat, "%d/%m/%Y"))
+                except ValueError:
+                    dates_out.append(np.nan)
+
+        return dates_out
+
     latest = max(int(str(file)[-8:-4]) for file in Path(DATA_DIRECTORY).rglob("*.csv"))
 
     for file in Path(DATA_DIRECTORY).rglob("*.csv"):
@@ -158,14 +163,32 @@ def create_eda() -> None:
 
             if re.search(f"^{_}", filetype):
 
-                dfs = create_dict_key(dfs, filetype)
+                dfs.setdefault(filetype, [])
 
                 names = [_["fieldname"] for _ in headers_json[_].values()]
+                dates = [
+                    _["fieldname"]
+                    for _ in headers_json[_].values()
+                    if _["format"][:5] == "Data "
+                ]
 
                 # Hack for some ragged columns not spec'd in data dictionary, or with delimiter not enclosed with quoting
-                names.extend(["ragged1", "ragged2", "ragged3"])
+                # """names.extend(["ragged1", "ragged2", "ragged3"])""""
+                # Added warn
 
-                df = pd.read_csv(file, names=names, delimiter=";", encoding="UTF-16")
+                df = pd.read_csv(
+                    file,
+                    names=names,
+                    delimiter=";",
+                    encoding="UTF-16",
+                    on_bad_lines="warn",
+                    true_values=["Sim"],  # Grab these from locale or data dict?
+                    false_values=["Não"],
+                    parse_dates=dates,
+                    date_parser=dateparse,
+                )
+
+                df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
 
                 dfs[filetype].append(df)
 
@@ -173,20 +196,21 @@ def create_eda() -> None:
                 if int(str(file)[-8:-4]) == latest:
 
                     filetype_yyyy = f"{filetype}_{str(file)[-8:-4]}"
-                    dfs = create_dict_key(dfs, filetype_yyyy)
+                    dfs.setdefault(filetype_yyyy, [])
                     dfs[filetype_yyyy].append(df)
 
     docs_dir = f"{DATA_DIRECTORY}/docs"
 
-
     os.makedirs(docs_dir, exist_ok=True)
+
+    clear_data(docs_dir)
 
     for _ in tqdm(dfs):
 
         df = pd.concat(dfs[_])
         profile = ProfileReport(
             df,
-            title=f"Relatório de perfil {_}, data {date_str}",
+            title=f"Profile report of {URL_BASE}, date {date_str}",
             explorative=True,
             # Use accessible palette
             plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
