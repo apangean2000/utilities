@@ -7,54 +7,35 @@ import json
 import os
 import re
 import sys
-import zipfile
 from pathlib import Path
-from typing import Type, Optional
+from typing import Optional
+from zipfile import ZipFile
 
+import numpy as np
 import pandas as pd
 import requests
 from tqdm import tqdm
 
 from pandas_profiling import ProfileReport
 
+pd.options.display.width = 0
+
 URL_BASE = "https://falabr.cgu.gov.br/publico/DownloadDados/"
 DATA_DIRECTORY = f"data/{sys.argv[0].split('/')[-1]}"
 
 
-def clear_data(directory: Path) -> None:
+def clear_data(directory: str) -> None:
     """
     Clear data directory
     """
 
-    directory = Path(directory)
-    for item in directory.iterdir():
+    directory_p = Path(directory)
+
+    for item in directory_p.iterdir():
         if item.is_dir():
-            clear_data(item)
+            clear_data(str(item))
         else:
             item.unlink()
-
-
-def create_dict_key(dct: dict, key: str, typ: Type = list) -> dict:
-    """
-    dict_list _summary_
-
-    :param dct: _description_
-    :type dct: dict
-    :param key: _description_
-    :type key: str
-    :return: _description_
-    :rtype: dct
-    """
-
-    if typ == list:
-
-        if key not in dct:
-            dct[key] = []
-
-    else:
-        raise Exception("Not implemented")
-
-    return dct
 
 
 def get_data() -> None:
@@ -62,13 +43,13 @@ def get_data() -> None:
     get_data _summary_
     """
 
-    clear_data(Path(DATA_DIRECTORY))
+    clear_data(DATA_DIRECTORY)
 
     os.makedirs(DATA_DIRECTORY, exist_ok=True)
 
     txt_base = requests.get(f"{URL_BASE}/DownloadDadosLai.aspx").text
 
-    headers: Optional[list[str]] = []
+    headers: list[str] = []
     file_headers: dict = {}
 
     for _ in [
@@ -76,8 +57,9 @@ def get_data() -> None:
         "Dicionário de Dados de Solicitantes",
         "Dicionário de Dados dos Recursos e Reclamações",
     ]:
-
-        headers.append(re.search(f'href="([^"]+).+?{_}.*', txt_base).group(1))
+        data_re = re.search(f'href="([^"]+).+?{_}.*', txt_base)
+        if data_re:
+            headers.append(data_re.group(1))
 
     for _ in headers:
 
@@ -111,14 +93,14 @@ def get_data() -> None:
             f"https://dadosabertos-download.cgu.gov.br/FalaBR/Arquivos_FalaBR/Pedidos_csv_{year}.zip"
         ).content
 
-        z = zipfile.ZipFile(io.BytesIO(data))
+        z = ZipFile(io.BytesIO(data))
         z.extractall(f"{DATA_DIRECTORY}/Pedidos_csv")
 
         data = requests.get(
             f"https://dadosabertos-download.cgu.gov.br/FalaBR/Arquivos_FalaBR/Recursos_Reclamacoes_csv_{year}.zip"
         ).content
 
-        z = zipfile.ZipFile(io.BytesIO(data))
+        z = ZipFile(io.BytesIO(data))
         z.extractall(f"{DATA_DIRECTORY}/Recursos_Reclamacoes_csv")
 
 
@@ -143,6 +125,31 @@ def create_eda() -> None:
 
     dfs: dict = {}
 
+    def dateparse(dates: list[str]) -> list[Optional[np.datetime64]]:
+        """
+        Forgiving parse list to date type list
+
+        :param dates: List of datetype strings
+        :type dates: list
+        :return: _description_
+        :rtype: list[Optional[datetime]]
+        """
+
+        dates_out: list[Optional[np.datetime64]] = []
+
+        for idx, dat in enumerate(dates):
+
+            date_bit = f"{dat[6:10]}-{dat[3:5]}-{dat[0:2]}"
+            time_bit = dat[11:] if dat[11:] else "00:00:00"
+
+            try:
+                # tz agnsotic at present though https://en.wikipedia.org/wiki/Time_in_Brazil
+                dates_out.append(np.datetime64(f"{date_bit}T{time_bit}"))
+            except ValueError:
+                dates_out.append(np.datetime64("NaT"))
+
+        return dates_out
+
     latest = max(int(str(file)[-8:-4]) for file in Path(DATA_DIRECTORY).rglob("*.csv"))
 
     for file in Path(DATA_DIRECTORY).rglob("*.csv"):
@@ -157,14 +164,34 @@ def create_eda() -> None:
 
             if re.search(f"^{_}", filetype):
 
-                dfs = create_dict_key(dfs, filetype)
+                dfs.setdefault(filetype, [])
 
                 names = [_["fieldname"] for _ in headers_json[_].values()]
+                dates = [
+                    _["fieldname"]
+                    for _ in headers_json[_].values()
+                    if _["format"][:5] == "Data "
+                ]
 
                 # Hack for some ragged columns not spec'd in data dictionary, or with delimiter not enclosed with quoting
-                names.extend(["ragged1", "ragged2", "ragged3"])
+                # """names.extend(["ragged1", "ragged2", "ragged3"])""""
+                # Added warn
+                # For _Pedidos_csv  file pattern looks like data dictionary columns don't align with csv's
 
-                df = pd.read_csv(file, names=names, delimiter=";", encoding="UTF-16")
+                df = pd.read_csv(
+                    file,
+                    index_col=False,
+                    encoding="UTF-16",
+                    names=names,
+                    delimiter=";",
+                    on_bad_lines="warn",
+                    true_values=["Sim"],  # Grab these from locale or data dict?
+                    false_values=["Não"],
+                    parse_dates=dates,
+                    date_parser=dateparse,
+                )
+
+                df.replace(r"^\s*$", np.nan, regex=True, inplace=True)
 
                 dfs[filetype].append(df)
 
@@ -172,26 +199,38 @@ def create_eda() -> None:
                 if int(str(file)[-8:-4]) == latest:
 
                     filetype_yyyy = f"{filetype}_{str(file)[-8:-4]}"
-                    dfs = create_dict_key(dfs, filetype_yyyy)
+                    dfs.setdefault(filetype_yyyy, [])
                     dfs[filetype_yyyy].append(df)
-
 
     docs_dir = f"{DATA_DIRECTORY}/docs"
 
     os.makedirs(docs_dir, exist_ok=True)
 
+    clear_data(docs_dir)
+
     for _ in tqdm(dfs):
 
-        df = pd.concat(dfs[_])
+        df = pd.concat(dfs[_], ignore_index=True)
         profile = ProfileReport(
             df,
-            title=f"Relatório de perfil {_}, data {date_str}",
+            title=f"Profile report of {_}, date {date_str}",
             explorative=True,
             # Use accessible palette
-            plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
+            plot={
+                "correlation": {"cmap": "viridis", "bad": "#000000"},
+                "missing": {"cmap": "viridis", "bad": "#000000"},
+            },
         )
 
-        profile.to_file(f"{docs_dir}/{_}.hmtl")
+        file_html = f"{docs_dir}/{_}.html"
+
+        profile.to_file(file_html)
+
+        with ZipFile(f"{docs_dir}/{date_str}.zip", "a") as zip:
+            zip.write(file_html)
+
+        with open(f"{docs_dir}/{_}.json", "w") as file_json:
+            json.dump(profile.to_json(), file_json)
 
 
 if __name__ == "__main__":
