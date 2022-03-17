@@ -211,7 +211,7 @@ def create_eda() -> None:
         df = pd.concat(dfs[_])
         profile = ProfileReport(
             df,
-            title=f"Profile report of {URL_BASE}, date {date_str}",
+            title=f"Profile report of {_}, date {date_str}",
             explorative=True,
             # Use accessible palette
             plot={"correlation": {"cmap": "viridis", "bad": "#000000"}},
