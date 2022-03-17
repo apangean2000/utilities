@@ -25,16 +25,11 @@ repos:
       - id: isort
         files: '.*'
         args: [ --profile=black, --project=pandas_profiling ]
-# https://github.com/mgedmin/check-manifest/issues/103
-#-   repo: https://github.com/mgedmin/check-manifest
-#    rev: "0.47"
-#    hooks:
-#    -   id: check-manifest
 -   repo: https://github.com/PyCQA/flake8
     rev: "4.0.1"
     hooks:
     -   id: flake8
-        args: [ "--ignore=E203,E501,W291,W503,SFS301,SIM106" ]
+        args: [ "--ignore=E203,E501,W291,W503,SFS301,SIM106,SIM113,T001" ]
         additional_dependencies:
           - flake8-comprehensions
           - flake8-sfs
@@ -52,12 +47,10 @@ repos:
         exclude: |
           (?x)(
             ^tests/|
-            ^docsrc/|
-            ^src/pandas_profiling/utils/common.py|
-            ^src/pandas_profiling/utils/imghdr_patch.py
+            ^docsrc/
           )
 -   repo: https://github.com/asottile/blacken-docs
-    rev: v1.12.0
+    rev: v1.12.1
     hooks:
     -   id: blacken-docs
 -   repo: https://github.com/pre-commit/pygrep-hooks

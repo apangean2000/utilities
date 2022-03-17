@@ -13,7 +13,7 @@ URL_MAIN = "https://extensions.ckan.org"
 DATA_DIRECTORY = f"data/{sys.argv[0].split('/')[-1]}"
 
 
-def get_ckan():
+def get_ckan() -> None:
     """
     get_ckan
 
@@ -47,7 +47,7 @@ def get_ckan():
         url = _.get("url")
         if re.search("http", url) is None:
             continue
-        print(url)
+
         res = requests.get(url)
         txt = res.text
 
@@ -82,7 +82,10 @@ def get_ckan():
             res = requests.get(url)
             txt = res.text
             data = re.search(r'<relative\-time datetime="([^"]+)"', txt, re.DOTALL)
-            _["date"] = data.group(1).strip()
+            if data:
+                _["date"] = data.group(1).strip()
+            else:
+                raise AttributeError()
 
         datas_lst[0] = _
         datas_lst[idx] = _

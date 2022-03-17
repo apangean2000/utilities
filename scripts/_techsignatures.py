@@ -1,5 +1,6 @@
 """
-[WIP] Find common technology signatures in hrefs 
+[WIP][TODO] Find common technology signatures in hrefs
+#TODO add logging 
 """
 
 import re
@@ -99,7 +100,7 @@ try:
         " ".join(re.findall(href_re, requests.get(urls[0], verify=False).text)),
         " ".join(re.findall(href_re, requests.get(urls[1], verify=False).text)),
     )
-except:
+except Exception:
     print("Something bad happened")
 
 
@@ -113,7 +114,7 @@ for url in urls[2:]:
                 common_str, requests.get(url, verify=False).text, re.M
             ):
                 urls_nocommon.append(url)
-        except:
+        except Exception:
             urls_errs.append(url)
 
 print("common_str", common_str)
