@@ -1,10 +1,7 @@
 """
-Analyse dado_gov_br site datasets
+[WIP] Analyse dado_gov_br via ckan api + get site datasets
 """
 # TODO cacert https://github.com/anyant/rssant/search?q=cert
-# TODO UnicodeError: encoding with 'idna' codec failed (UnicodeError: label empty or too long)
-# TODO Update json output
-# TODO csv reflect writerows,
 
 import csv
 import json
@@ -18,7 +15,7 @@ from time import sleep
 from typing import Optional, Union
 
 import requests
-from visions import Object
+from requests.structures import CaseInsensitiveDict
 from yarl import URL
 
 logging.basicConfig(level=logging.ERROR)
@@ -129,7 +126,7 @@ class ResponseBuilder:
         self._content: Optional[bytes] = None  # check
         self._status: Optional[int] = None
         self._url: Optional[str] = None
-        self._headers: Object = None
+        self._headers: Optional[CaseInsensitiveDict[str]] = None
         self._use_proxy: Optional[bool] = use_proxy
         self._url_redirect: Optional[str] = None
         self._method: str = ""
@@ -143,7 +140,7 @@ class ResponseBuilder:
     def url(self, value: Optional[str]):
         self._url = value
 
-    def headers(self, headers: Object):
+    def headers(self, headers: CaseInsensitiveDict[str]):
         self._headers = headers
 
     def url_redirect(self, value: Optional[str]):
