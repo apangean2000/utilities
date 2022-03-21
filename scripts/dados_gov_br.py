@@ -4,6 +4,7 @@ Analyse dado_gov_br site datasets
 # TODO cacert https://github.com/anyant/rssant/search?q=cert
 # TODO UnicodeError: encoding with 'idna' codec failed (UnicodeError: label empty or too long)
 # TODO Update json output
+# TODO csv reflect writerows,
 
 import csv
 import json
@@ -202,36 +203,35 @@ class ResponseBuilder:
         )
 
 
-def clear_data(directory: str) -> None:
+def csv_append(
+    filename: Union[str, Path],
+    row_dct: Union[dict, list[dict]],
+    fieldnames: list = None,
+) -> Union[dict, list[dict]]:
     """
-    Clear data directory, ideally in a helper file
+     Append to a csv file
+
+    :param filename: _description_
+    :type filename: Union[str, Path]
+    :param row_dct: _description_
+    :type row_dct: Union[dict, list[dict]]
+    :param fieldnames: _description_, defaults to None
+    :type fieldnames: list, optional
+    :return: _description_
+    :rtype: Union[dict, list[dict]]
     """
 
-    directory_p = Path(directory)
-
-    if os.path.exists(directory_p):
-        for item in directory_p.iterdir():
-            if item.is_dir():
-                clear_data(str(item))
-            else:
-                item.unlink()
-
-
-def write_csv(filename: Union[str, Path], row_dct: dict) -> dict:
-    """
-    Append to a csv file
-
-    :param filename: Filename or path
-    :type filename: str
-    :param row_dct: A row Dict
-    :type row_dct: dict
-    :return: Echo the request dict
-    :rtype: dict
-    """
+    if fieldnames is None:
+        fieldnames = list(
+            row_dct.keys() if isinstance(row_dct, dict) else row_dct[0].keys()
+        )
 
     with open(filename, "a") as fp:
-        writer = csv.DictWriter(fp, fieldnames=list(row_dct.keys()))
-        writer.writerow(row_dct)
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        if isinstance(row_dct, dict):
+            writer.writerow(row_dct)
+        else:
+            writer.writerows(row_dct)
 
     return row_dct
 
@@ -317,7 +317,7 @@ def fetch(
                     }
 
                     if file_output:
-                        write_csv(file_output, out_dct)
+                        csv_append(file_output, out_dct)
 
                     return out_dct
 
@@ -344,7 +344,7 @@ def fetch(
                 out_dct = {attr: getattr(built, attr, None) for attr in built.__slots__}
 
                 if file_output:
-                    write_csv(file_output, out_dct)
+                    csv_append(file_output, out_dct)
 
                 return out_dct
 
@@ -366,7 +366,7 @@ def fetch(
             out_dct = {attr: getattr(built, attr, None) for attr in built.__slots__}
 
             if file_output:
-                write_csv(file_output, out_dct)
+                csv_append(file_output, out_dct)
 
             return out_dct
 
@@ -383,6 +383,15 @@ def fetch(
 
 
 def json_process(dct: dict) -> list[dict]:
+    """
+    Process fields of interest into a dict
+    # TODO possibly model this as a class
+    :param dct: _description_
+    :type dct: dict
+    :return: _description_
+    :rtype: list[dict]
+    """
+
     def dct_package(dct: dict) -> dict:
 
         measure_dct = {
@@ -465,8 +474,6 @@ def ckan_api(session: requests.Session = None) -> requests.Session:
         session = requests.Session()
         session.headers.update({"User-Agent": USER_AGENT})
 
-    clear_data(DIRECTORY_DATA)
-
     os.makedirs(DIRECTORY_DATA, exist_ok=True)
 
     data_dct = fetch(
@@ -476,17 +483,55 @@ def ckan_api(session: requests.Session = None) -> requests.Session:
         timeout=timeout,
     )
 
+    # Write some target fields out, specced in json_process
+
     file_output = Path(f"{DIRECTORY_DATA}/{sys.argv[0].split('/')[-1]}.csv")
+    fieldnames = [
+        "Update",
+        "Format",
+        "Metadata",
+        "License",
+        "Data dictionary",
+        "Availability",
+        "Historic",
+        "API",
+        "license_title",
+        "maintainer",
+        "maintainer_email",
+        "license_id",
+        "author",
+        "author_email",
+        "_package_id",
+        "id",
+        "last_modified",
+        "format",
+        "created",
+        "url",
+        "state",
+        "mimetype",
+        "url_type",
+        "resource_type",
+        "name",
+    ]
+    with open(file_output, mode="w") as fp:
+        writer = csv.DictWriter(fp, fieldnames=fieldnames)
+        writer.writeheader()
 
     for idx, _ in enumerate(json.loads(data_dct["_content"])["result"]):
+
         url = f"{URL_BASE}/action/package_show?id={_}"
-        fetch(
+        datas = fetch(
             session=session,
             url=url,
             verb="GET",
             timeout=timeout,
-            file_output=file_output,
         )
+
+        if datas["_content"]:
+            # API contract is pretty stable, hence no error checking
+            csv_append(
+                file_output, json_process(json.loads(datas["_content"])), fieldnames
+            )
 
     logging.info(f"Rows extracted {idx}")
 
@@ -541,7 +586,7 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
             builder = ResponseBuilder()
             builder.url(url)
             built = builder.build()
-            write_csv(
+            csv_append(
                 file_output,
                 {attr: getattr(built, attr, None) for attr in built.__slots__},
             )
@@ -558,4 +603,4 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
 
 
 if __name__ == "__main__":
-    ckan_url()
+    ckan_api()
