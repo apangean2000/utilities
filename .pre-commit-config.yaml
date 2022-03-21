@@ -1,11 +1,11 @@
-# Courtesy of https://github.com/ydataai/pandas-profiling/blob/develop/.pre-commit-config.yaml
+# Modified from https://github.com/ydataai/pandas-profiling/blob/develop/LICENSE
 
 repos:
 -   repo: https://github.com/psf/black
     rev: 21.12b0
     hooks:
     - id: black
-      language_version: python3.8
+      language_version: python3.10
 -   repo: https://github.com/nbQA-dev/nbQA
     rev: 1.2.2
     hooks:
