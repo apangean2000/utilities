@@ -3,10 +3,11 @@ Get a list of file formats from wikipadeia
 """
 
 import csv
+import logging
 import os
 import re
 import sys
-import logging
+
 import requests
 
 logging.basicConfig(stream=sys.stdout, level=logging.WARNING)
@@ -21,7 +22,7 @@ def get_data() -> None:
     """
 
     resp = requests.get(URL_MAIN)
-    
+
     if resp.status_code != 200:
         logging.error(f"URL: {URL_MAIN} status code {str(resp.status_code)}")
 
@@ -29,43 +30,51 @@ def get_data() -> None:
 
     with open(f"{DATA_DIRECTORY}/{sys.argv[0].split('/')[-1]}.csv", "w") as f:
 
-        dw = csv.DictWriter(f, fieldnames=['extension','description'])
+        dw = csv.DictWriter(f, fieldnames=["extension", "description"])
         dw.writeheader()
 
-        for _ in re.findall('<li>(.+?)<li>',resp.text,re.M|re.DOTALL):
+        for _ in re.findall("<li>(.+?)<li>", resp.text, re.M | re.DOTALL):
 
-            try:
-                datas = re.search('^(.+?)(?:-|–)(.*)$',re.sub('<[^<]+?>', '', _),flags=re.M|re.DOTALL).groups()
-            except:
+            if datas_tmp := re.search(
+                "^(.+?)(?:-|–)(.*)$",
+                re.sub("<[^<]+?>", "", _),
+                flags=re.M | re.DOTALL,
+            ):
+                datas = list(datas_tmp.groups())
+            else:
                 datas = []
 
             if len(datas) == 2:
 
                 # Just get first enclosing brackets here
 
-                if enclosed_datas := re.findall('\(([^\)]+)\).*',datas[0]):
+                if enclosed_datas := re.findall(r"\(([^\)]+)\).*", datas[0]):
 
-                    for enclosed_data in enclosed_datas[0].split(','):
+                    for enclosed_data in enclosed_datas[0].split(","):
 
-                        if re.search('\[edit\]',datas[1].strip(),re.M):
+                        if re.search(r"\[edit\]", datas[1].strip(), re.M):
                             logging.info(f"skipped {datas}")
                             continue
 
-                        data = {'extension':    enclosed_data.strip(),
-                                'description':  datas[1].strip()}
+                        data = {
+                            "extension": enclosed_data.strip(),
+                            "description": datas[1].strip(),
+                        }
 
                         dw.writerow(data)
 
                 else:
 
-                    for data_splt in datas[0].split(','):
+                    for data_splt in datas[0].split(","):
 
-                        if re.search('\[edit\]',datas[1].strip(),re.M):
+                        if re.search(r"\[edit\]", datas[1].strip(), re.M):
                             logging.info(f"skipped {datas}")
                             continue
 
-                        data = {'extension'    :  data_splt.strip(),
-                                'description'  :  datas[1].strip()}
+                        data = {
+                            "extension": data_splt.strip(),
+                            "description": datas[1].strip(),
+                        }
 
                         dw.writerow(data)
 
