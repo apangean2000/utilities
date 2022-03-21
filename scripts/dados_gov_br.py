@@ -30,40 +30,6 @@ REQUEST_RETRIES_MAX = 4
 REQUEST_TIMEOUT = 15
 
 
-def clear_data(directory: str) -> None:
-    """
-    Clear data directory, ideally in a helper file
-    """
-
-    directory_p = Path(directory)
-
-    if os.path.exists(directory_p):
-        for item in directory_p.iterdir():
-            if item.is_dir():
-                clear_data(str(item))
-            else:
-                item.unlink()
-
-
-def write_csv(filename: Union[str, Path], row_dct: dict) -> dict:
-    """
-    Append to a csv file
-
-    :param filename: Filename or path
-    :type filename: str
-    :param row_dct: A row Dict
-    :type row_dct: dict
-    :return: Echo the request dict
-    :rtype: dict
-    """
-
-    with open(filename, "a") as fp:
-        writer = csv.DictWriter(fp, fieldnames=list(row_dct.keys()))
-        writer.writerow(row_dct)
-
-    return row_dct
-
-
 class Response:
     # Inspired by https://github.com/anyant/rssant/blob/master/LICENSE
     __slots__ = (
@@ -218,10 +184,9 @@ class ResponseBuilder:
         if self.method and self.method not in ["HEAD"]:
             content = self._content
 
-        # TODO analyze content further
-        # if self._content:
-        #    feed_type = detect_feed_type(self._content, mime_type)
-        #    encoding = detect_content_encoding(self._content, http_encoding)
+        # TODO analyze content further,
+        # detect_feed_type self._content, mime_type ,
+        # detect_content_encoding self._content, http_encoding
 
         status = self._status  # if self._status is not None else HTTPStatus.OK.value
 
@@ -235,6 +200,40 @@ class ResponseBuilder:
             mime_type=mime_type,
             url_redirect=self._url_redirect,
         )
+
+
+def clear_data(directory: str) -> None:
+    """
+    Clear data directory, ideally in a helper file
+    """
+
+    directory_p = Path(directory)
+
+    if os.path.exists(directory_p):
+        for item in directory_p.iterdir():
+            if item.is_dir():
+                clear_data(str(item))
+            else:
+                item.unlink()
+
+
+def write_csv(filename: Union[str, Path], row_dct: dict) -> dict:
+    """
+    Append to a csv file
+
+    :param filename: Filename or path
+    :type filename: str
+    :param row_dct: A row Dict
+    :type row_dct: dict
+    :return: Echo the request dict
+    :rtype: dict
+    """
+
+    with open(filename, "a") as fp:
+        writer = csv.DictWriter(fp, fieldnames=list(row_dct.keys()))
+        writer.writerow(row_dct)
+
+    return row_dct
 
 
 def retry_logger(
@@ -560,4 +559,3 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
 
 if __name__ == "__main__":
     ckan_url()
-    # ckan_api()

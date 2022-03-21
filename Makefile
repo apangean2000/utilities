@@ -30,6 +30,9 @@ install:
 	poetry install
 	poetry shell
 
+update:
+	poetry update
+
 lint:
 	pre-commit run --all-files
 
