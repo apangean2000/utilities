@@ -82,7 +82,7 @@ class Response:
         *,
         content: Optional[bytes] = None,  # HEAD requests
         status: Optional[int] = None,
-        url: str = "",
+        url: Optional[str] = None,
         encoding: Optional[str] = None,
         etag: Optional[str] = None,
         last_modified: Optional[str] = None,
@@ -122,7 +122,7 @@ class Response:
         return self._status
 
     @property
-    def url(self) -> str:
+    def url(self) -> Optional[str]:
         return self._url
 
     @property
@@ -161,64 +161,28 @@ class ResponseBuilder:
     def __init__(self, *, use_proxy: bool = False):
         self._content: Optional[bytes] = None  # check
         self._status: Optional[int] = None
-        self._url: str = ""
+        self._url: Optional[str] = None
         self._headers: Object = None
         self._use_proxy: Optional[bool] = use_proxy
         self._url_redirect: Optional[str] = None
         self._method: str = ""
 
-    def content(self, value: bytes):
-        """
-        content _summary_
-
-        :param value: _description_
-        :type value: bytes
-        """
+    def content(self, value: Optional[bytes]):
         self._content = value
 
     def status(self, value: Optional[int]):
-        """
-        status _summary_
-
-        :param value: _description_
-        :type value: Optional[int]
-        """
         self._status = value
 
-    def url(self, value: str):
-        """
-        url _summary_
-
-        :param value: _description_
-        :type value: str
-        """
+    def url(self, value: Optional[str]):
         self._url = value
 
     def headers(self, headers: Object):
-        """
-        headers _summary_
-
-        :param headers: _description_
-        :type headers: Optional[dict]
-        """
         self._headers = headers
 
     def url_redirect(self, value: Optional[str]):
-        """
-        url_redirect _summary_
-
-        :param value: _description_
-        :type value: Optional[str]
-        """
         self._url_redirect = value
 
     def method(self, value: str):
-        """
-        method _summary_
-
-        :param value: _description_
-        :type value: str
-        """
         self._method = value
 
     def build(self) -> Response:
@@ -560,16 +524,17 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
     with open(file_url) as f:
         urls_tmp = list({_["url"] for _ in list(csv.DictReader(f))})
 
-    for _ in urls_tmp:  # Check for malformed up front
+    for _ in urls_tmp:  # Prescreen for malformed up front
 
         raisenwrite = False
+
         try:
             url = URL(_)
             if len(url.host) > 64 or url.port is None:
                 raisenwrite = True
             else:
                 urls.append(_)
-        except TypeError:
+        except (ValueError, TypeError, UnicodeError):
             raisenwrite = True
 
         if raisenwrite:
