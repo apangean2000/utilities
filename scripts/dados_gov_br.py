@@ -21,7 +21,7 @@ import requests
 from requests.structures import CaseInsensitiveDict
 from yarl import URL
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
 URL_BASE: str = "https://dados.gov.br/api/3"
 DIRECTORY_DATA = f"data/{sys.argv[0].split('/')[-1]}"
@@ -32,7 +32,7 @@ REQUEST_TIMEOUT = 15
 
 
 class Response:
-    # Inspired by https://github.com/anyant/rssant/blob/master/LICENSE
+    # Inspired by https://github.com/anyant/rssant/commit/6fcf7fc56c05202d26968cb8b987a242d183eb17
     __slots__ = (
         "_content",
         "_status",
@@ -603,4 +603,4 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
 
 
 if __name__ == "__main__":
-    ckan_url()
+    ckan_api()

@@ -1,4 +1,4 @@
-# Modified from https://github.com/ydataai/pandas-profiling/blob/develop/LICENSE
+# Modified from https://github.com/ydataai/pandas-profiling/commit/5089a302bf6e6bc4f702014c30ab9c6962ebad3d
 
 repos:
 -   repo: https://github.com/psf/black
