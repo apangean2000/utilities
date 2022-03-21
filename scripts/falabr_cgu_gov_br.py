@@ -31,11 +31,12 @@ def clear_data(directory: str) -> None:
 
     directory_p = Path(directory)
 
-    for item in directory_p.iterdir():
-        if item.is_dir():
-            clear_data(str(item))
-        else:
-            item.unlink()
+    if os.path.exists(directory_p):
+        for item in directory_p.iterdir():
+            if item.is_dir():
+                clear_data(str(item))
+            else:
+                item.unlink()
 
 
 def get_data() -> None:
