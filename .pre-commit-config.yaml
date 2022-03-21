@@ -29,7 +29,7 @@ repos:
     rev: "4.0.1"
     hooks:
     -   id: flake8
-        args: [ "--ignore=E203,E501,W291,W503,SFS301,SIM106,SIM113,T001" ]
+        args: [ "--ignore=E501,SFS301,T001,SIM106,SIM113,E203" ]
         additional_dependencies:
           - flake8-comprehensions
           - flake8-sfs
