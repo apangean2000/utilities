@@ -2,6 +2,9 @@
 [WIP] Analyse dado_gov_br via ckan api + get site datasets
 """
 # TODO cacert https://github.com/anyant/rssant/search?q=cert
+# TODO FTP
+# TODO URL Fix suggestions
+# TODO
 
 import csv
 import json
@@ -140,7 +143,7 @@ class ResponseBuilder:
     def url(self, value: Optional[str]):
         self._url = value
 
-    def headers(self, headers: CaseInsensitiveDict[str]):
+    def headers(self, headers: Optional[CaseInsensitiveDict[str]]):
         self._headers = headers
 
     def url_redirect(self, value: Optional[str]):
@@ -381,8 +384,8 @@ def fetch(
 
 def json_process(dct: dict) -> list[dict]:
     """
-    Process fields of interest into a dict
-    # TODO possibly model this as a class
+    Process fields of interest into a dict from ckan response
+    #TODO possibly model this as a class
     :param dct: _description_
     :type dct: dict
     :return: _description_
