@@ -603,4 +603,4 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
 
 
 if __name__ == "__main__":
-    ckan_api()
+    ckan_url()
