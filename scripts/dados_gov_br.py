@@ -23,10 +23,10 @@ from yarl import URL
 
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
-URL_BASE: str = "https://dados.gov.br/api/3"
+URL_BASE: str = 'https://dados.gov.br/api/3'
 DIRECTORY_DATA = f"data/{sys.argv[0].split('/')[-1]}"
 DIRECTORY_MAPPING = f"mapping/{sys.argv[0].split('/')[-1]}"
-USER_AGENT: str = "dados.gov.br-ckan-validator"
+USER_AGENT: str = 'dados.gov.br-ckan-validator'
 REQUEST_RETRIES_MAX = 4
 REQUEST_TIMEOUT = 15
 
@@ -34,14 +34,14 @@ REQUEST_TIMEOUT = 15
 class Response:
     # Inspired by https://github.com/anyant/rssant/commit/6fcf7fc56c05202d26968cb8b987a242d183eb17
     __slots__ = (
-        "_content",
-        "_status",
-        "_url",
-        "_encoding",
-        "_etag",
-        "_last_modified",
-        "_mime_type",
-        "_url_redirect",
+        '_content',
+        '_status',
+        '_url',
+        '_encoding',
+        '_etag',
+        '_last_modified',
+        '_mime_type',
+        '_url_redirect',
     )
 
     def __init__(
@@ -73,11 +73,11 @@ class Response:
         try:  # Using some none standard
             status_name = HTTPStatus(self.status).name
         except ValueError:
-            status_name = ""
+            status_name = ''
 
         return (  # TODO full repr
-            f"<{name} {self.status} {status_name} url={self.url!r} length={length} "
-            f"encoding={self.encoding!r} mimetype={self.mime_type!r}>"
+            f'<{name} {self.status} {status_name} url={self.url!r} length={length} '
+            f'encoding={self.encoding!r} mimetype={self.mime_type!r}>'
         )
 
     @property
@@ -116,13 +116,13 @@ class Response:
 class ResponseBuilder:
 
     __slots__ = (
-        "_content",
-        "_status",
-        "_url",
-        "_headers",
-        "_use_proxy",
-        "_url_redirect",
-        "_method",
+        '_content',
+        '_status',
+        '_url',
+        '_headers',
+        '_use_proxy',
+        '_url_redirect',
+        '_method',
     )
 
     def __init__(self, *, use_proxy: bool = False):
@@ -132,7 +132,7 @@ class ResponseBuilder:
         self._headers: Optional[CaseInsensitiveDict[str]] = None
         self._use_proxy: Optional[bool] = use_proxy
         self._url_redirect: Optional[str] = None
-        self._method: str = ""
+        self._method: str = ''
 
     def content(self, value: Optional[bytes]):
         self._content = value
@@ -164,25 +164,25 @@ class ResponseBuilder:
 
         if self._headers:
 
-            content_type_header = self._headers.get("content-type")
+            content_type_header = self._headers.get('content-type')
 
             if content_type_header:
                 # Perhaps use cgi lib for params
-                datas = [_.strip() for _ in content_type_header.split(";")[0:2]]
+                datas = [_.strip() for _ in content_type_header.split(';')[0:2]]
 
                 mime_type = datas[0]
 
                 if len(datas) > 1:
                     encoding = datas[1].replace(
-                        "charset=", ""
+                        'charset=', ''
                     )  # _parse_content_type_header(content_type_header)
 
-            etag = self._headers.get("etag")
-            last_modified = self._headers.get("last-modified")
+            etag = self._headers.get('etag')
+            last_modified = self._headers.get('last-modified')
 
         content = None
 
-        if self.method and self.method not in ["HEAD"]:
+        if self.method and self.method not in ['HEAD']:
             content = self._content
 
         # TODO analyze content further,
@@ -226,7 +226,7 @@ def csv_append(
             row_dct.keys() if isinstance(row_dct, dict) else row_dct[0].keys()
         )
 
-    with open(filename, "a") as fp:
+    with open(filename, 'a') as fp:
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         if isinstance(row_dct, dict):
             writer.writerow(row_dct)
@@ -257,10 +257,10 @@ def retry_logger(
     retries += 1
 
     if retries == REQUEST_RETRIES_MAX:
-        logging.warning(f"Issue with: {url} | Err {err} | Status {str(status)}")
+        logging.warning(f'Issue with: {url} | Err {err} | Status {str(status)}')
         return (True, retries)
 
-    logging.error(f"Error with: {url} | Err {err} | Status {str(status)}")
+    logging.error(f'Error with: {url} | Err {err} | Status {str(status)}')
 
     return (False, retries)
 
@@ -327,7 +327,7 @@ def fetch(
                 builder.url(url)
                 builder.status(response.status_code)
 
-                if verb not in ["HEAD"]:
+                if verb not in ['HEAD']:
                     builder.content(response.content)
 
                 builder.headers(response.headers)
@@ -397,59 +397,59 @@ def json_process(dct: dict) -> list[dict]:
         measure_dct = {
             _: None
             for _ in [
-                "Update",
-                "Format",
-                "Metadata",
-                "License",
-                "Data dictionary",
-                "Availability",
-                "Historic",
-                "API",
+                'Update',
+                'Format',
+                'Metadata',
+                'License',
+                'Data dictionary',
+                'Availability',
+                'Historic',
+                'API',
             ]
         }
 
         for _ in [
-            "license_title",
-            "maintainer",
-            "maintainer_email",
-            "license_id",
-            "author",
-            "author_email",
+            'license_title',
+            'maintainer',
+            'maintainer_email',
+            'license_id',
+            'author',
+            'author_email',
         ]:
             measure_dct[_] = dct.get(_)
 
-        for _ in ["id"]:
-            measure_dct[f"_package_{_}"] = dct.get(_)
+        for _ in ['id']:
+            measure_dct[f'_package_{_}'] = dct.get(_)
 
-        for _ in data.get("extras", []):
-            if dct.get("key", None) == "Frequência de atualização":
-                measure_dct["Update"] = dct.get("value")
+        for _ in data.get('extras', []):
+            if dct.get('key', None) == 'Frequência de atualização':
+                measure_dct['Update'] = dct.get('value')
 
         return measure_dct
 
     measure_lst: list[dict] = []
 
-    datas: list = [dct.get("result")]
+    datas: list = [dct.get('result')]
 
     for data in datas:
 
         dct_pack = dct_package(data)
 
-        for _ in data.get("resources", []):
+        for _ in data.get('resources', []):
 
             dct_resource = deepcopy(dct_pack)
 
             for fieldname in [
-                "id",
-                "last_modified",
-                "format",
-                "created",
-                "url",
-                "state",
-                "mimetype",
-                "url_type",
-                "resource_type",
-                "name",
+                'id',
+                'last_modified',
+                'format',
+                'created',
+                'url',
+                'state',
+                'mimetype',
+                'url_type',
+                'resource_type',
+                'name',
             ]:
 
                 dct_resource[fieldname] = _.get(fieldname)
@@ -472,14 +472,14 @@ def ckan_api(session: requests.Session = None) -> requests.Session:
     if session is None:
 
         session = requests.Session()
-        session.headers.update({"User-Agent": USER_AGENT})
+        session.headers.update({'User-Agent': USER_AGENT})
 
     os.makedirs(DIRECTORY_DATA, exist_ok=True)
 
     data_dct = fetch(
         session=session,
-        url=f"{URL_BASE}/action/package_list",
-        verb="GET",
+        url=f'{URL_BASE}/action/package_list',
+        verb='GET',
         timeout=timeout,
     )
 
@@ -487,53 +487,53 @@ def ckan_api(session: requests.Session = None) -> requests.Session:
 
     file_output = Path(f"{DIRECTORY_DATA}/{sys.argv[0].split('/')[-1]}.csv")
     fieldnames = [
-        "Update",
-        "Format",
-        "Metadata",
-        "License",
-        "Data dictionary",
-        "Availability",
-        "Historic",
-        "API",
-        "license_title",
-        "maintainer",
-        "maintainer_email",
-        "license_id",
-        "author",
-        "author_email",
-        "_package_id",
-        "id",
-        "last_modified",
-        "format",
-        "created",
-        "url",
-        "state",
-        "mimetype",
-        "url_type",
-        "resource_type",
-        "name",
+        'Update',
+        'Format',
+        'Metadata',
+        'License',
+        'Data dictionary',
+        'Availability',
+        'Historic',
+        'API',
+        'license_title',
+        'maintainer',
+        'maintainer_email',
+        'license_id',
+        'author',
+        'author_email',
+        '_package_id',
+        'id',
+        'last_modified',
+        'format',
+        'created',
+        'url',
+        'state',
+        'mimetype',
+        'url_type',
+        'resource_type',
+        'name',
     ]
-    with open(file_output, mode="w") as fp:
+    with open(file_output, mode='w') as fp:
         writer = csv.DictWriter(fp, fieldnames=fieldnames)
         writer.writeheader()
 
-    for idx, _ in enumerate(json.loads(data_dct["_content"])["result"]):
+    for idx, _ in enumerate(json.loads(data_dct['_content'])['result']):
 
-        url = f"{URL_BASE}/action/package_show?id={_}"
+        url = f'{URL_BASE}/action/package_show?id={_}'
         datas = fetch(
             session=session,
             url=url,
-            verb="GET",
+            verb='GET',
             timeout=timeout,
         )
 
-        if datas["_content"]:
+        if datas['_content']:
             # API contract is pretty stable, hence no error checking
             csv_append(
-                file_output, json_process(json.loads(datas["_content"])), fieldnames
+                file_output, json_process(json.loads(datas['_content'])), fieldnames
             )
 
-    logging.info(f"Rows extracted {idx}")
+    logging.info(f'Rows extracted {idx}')
 
     return session
 
@@ -550,23 +550,23 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
     if session is None:
 
         session = requests.Session()
-        session.headers.update({"User-Agent": USER_AGENT})
+        session.headers.update({'User-Agent': USER_AGENT})
 
     file_url = Path(f"{DIRECTORY_DATA}/{sys.argv[0].split('/')[-1]}.csv")
     if file_url.is_file() is False:
         ckan_api()
 
-    os.makedirs(f"_{DIRECTORY_DATA}", exist_ok=True)
+    os.makedirs(f'_{DIRECTORY_DATA}', exist_ok=True)
 
     file_output = Path(f"_{DIRECTORY_DATA}/{sys.argv[0].split('/')[-1]}.csv")
-    with open(file_output, mode="w") as fp:
+    with open(file_output, mode='w') as fp:
         writer = csv.DictWriter(fp, fieldnames=Response.__slots__)
         writer.writeheader()
 
     urls_tmp = urls = []
 
     with open(file_url) as f:
-        urls_tmp = list({_["url"] for _ in list(csv.DictReader(f))})
+        urls_tmp = list({_['url'] for _ in list(csv.DictReader(f))})
 
     for _ in urls_tmp:  # Prescreen for malformed up front
 
@@ -582,7 +582,7 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
             raisenwrite = True
 
         if raisenwrite:
-            logging.error(f"Issue with {_}")
+            logging.error(f'Issue with {_}')
             builder = ResponseBuilder()
             builder.url(url)
             built = builder.build()
@@ -595,12 +595,12 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
         fetch(
             session=session,
             url=url,
-            verb="HEAD",
+            verb='HEAD',
             file_output=file_output,
         )
 
     return session
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     ckan_url()

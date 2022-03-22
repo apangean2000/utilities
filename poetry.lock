@@ -1269,6 +1269,18 @@ optional = false
 python-versions = ">=3.6"
 
 [[package]]
+name = "uri"
+version = "2.0.1"
+description = "A type to represent, query, and manipulate a Uniform Resource Identifier."
+category = "main"
+optional = false
+python-versions = "*"
+
+[package.extras]
+development = ["pytest", "pytest-cov", "pytest-flakes", "pytest-isort", "pre-commit"]
+http = ["requests"]
+
+[[package]]
 name = "urllib3"
 version = "1.26.9"
 description = "HTTP library with thread-safe connection pooling, file post, and more."
@@ -1367,7 +1379,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "99af820991f75877463198f3b70993d6468083a1f9d971a8b8f564d21d95f894"
+content-hash = "642bcdabaccea6ec2cda42373d83281f14b771c6d49c57250d21d639b1117ed7"
 
 [metadata.files]
 appnope = [
@@ -2407,6 +2419,10 @@ traitlets = [
 typing-extensions = [
     {file = "typing_extensions-4.1.1-py3-none-any.whl", hash = "sha256:21c85e0fe4b9a155d0799430b0ad741cdce7e359660ccbd8b530613e8df88ce2"},
     {file = "typing_extensions-4.1.1.tar.gz", hash = "sha256:1a9462dcc3347a79b1f1c0271fbe79e844580bb598bafa1ed208b94da3cdcd42"},
+]
+uri = [
+    {file = "uri-2.0.1-py2.py3-none-any.whl", hash = "sha256:df7df5653c8d38cf8a394db0d86728fcbfc6b4ecc62522a7972e078c1cace963"},
+    {file = "uri-2.0.1.tar.gz", hash = "sha256:b56fa1ca7fdbb43d919d921c360a145358529d5430dec90d46a7b902179529b9"},
 ]
 urllib3 = [
     {file = "urllib3-1.26.9-py2.py3-none-any.whl", hash = "sha256:44ece4d53fb1706f667c9bd1c648f5469a2ec925fcf3a776667042d645472c14"},
