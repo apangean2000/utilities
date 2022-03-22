@@ -90,25 +90,25 @@ def longest_common_substring(s1: str, s2: str) -> str:
     return s1[x_longest - longest : x_longest]
 
 
-urls = [_.split(';') for _ in SITES.splitlines() if _ != '']
-urls = [f'http://{_}' for sublist in urls for _ in sublist]
+urls = [_.split(";") for _ in SITES.splitlines() if _ != ""]
+urls = [f"http://{_}" for sublist in urls for _ in sublist]
 
 href_re = re.compile("href=(?:\"|')?([^\"|']+)", flags=re.M)
 
 try:
     common_str = longest_common_substring(
-        ' '.join(re.findall(href_re, requests.get(urls[0], verify=False).text)),
-        ' '.join(re.findall(href_re, requests.get(urls[1], verify=False).text)),
+        " ".join(re.findall(href_re, requests.get(urls[0], verify=False).text)),
+        " ".join(re.findall(href_re, requests.get(urls[1], verify=False).text)),
     )
 except Exception:
-    print('Something bad happened')
+    print("Something bad happened")
 
 
 urls_nocommon = []
 urls_errs = []
 
 for url in urls[2:]:
-    for url in url.split(';'):
+    for url in url.split(";"):
         try:
             if except_url := re.search(
                 common_str, requests.get(url, verify=False).text, re.M
@@ -117,6 +117,6 @@ for url in urls[2:]:
         except Exception:
             urls_errs.append(url)
 
-print('common_str', common_str)
-print('urls_nocommon', urls_nocommon)
-print('urls_errs', urls_errs)
+print("common_str", common_str)
+print("urls_nocommon", urls_nocommon)
+print("urls_errs", urls_errs)

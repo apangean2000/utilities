@@ -9,7 +9,7 @@ import sys
 
 import requests
 
-URL_MAIN = 'https://extensions.ckan.org'
+URL_MAIN = "https://extensions.ckan.org"
 DATA_DIRECTORY = f"data/{sys.argv[0].split('/')[-1]}"
 
 
@@ -28,7 +28,7 @@ def get_ckan() -> None:
 
     for url in urls:
 
-        res = requests.get(f'{URL_MAIN}{url}')
+        res = requests.get(f"{URL_MAIN}{url}")
 
         datas = re.search(
             '<h1>(?P<name>.+?)<br />.*?<small>(?P<publisher>[^<]+)<.*?title="Project Home Page".*?href="(?P<url>[^"]+)',
@@ -38,29 +38,29 @@ def get_ckan() -> None:
 
         if datas:
             dct_tmp = {k: v.strip() for k, v in datas.groupdict().items()}
-            dct_tmp['publisher'] = re.sub('by ', '', dct_tmp['publisher'])
+            dct_tmp["publisher"] = re.sub("by ", "", dct_tmp["publisher"])
             datas_lst.append(dct_tmp)
             # break
 
     for idx, _ in enumerate(datas_lst):
 
-        url = _.get('url')
-        if re.search('http', url) is None:
+        url = _.get("url")
+        if re.search("http", url) is None:
             continue
 
         res = requests.get(url)
         txt = res.text
 
-        for stat in ['star', 'watching', 'fork']:
+        for stat in ["star", "watching", "fork"]:
 
-            data = re.search(fr'<strong>(\d+)</strong>[^<]*{stat}', txt)
+            data = re.search(fr"<strong>(\d+)</strong>[^<]*{stat}", txt)
 
             if data:
                 _[stat] = data.group(1).strip()
             else:
                 _[stat] = 0
 
-        for stat in ['Used by', 'Contributors']:
+        for stat in ["Used by", "Contributors"]:
 
             data = re.search(fr'{stat}.*?class="Counter">(\d+)', txt)
 
@@ -76,25 +76,25 @@ def get_ckan() -> None:
         )
 
         if url_commit:
-            url = f'https://github.com{url_commit.group(1)}'.replace(
-                '/spoofed_commit_check/', '/tree-commit/'
+            url = f"https://github.com{url_commit.group(1)}".replace(
+                "/spoofed_commit_check/", "/tree-commit/"
             )
             res = requests.get(url)
             txt = res.text
             data = re.search(r'<relative\-time datetime="([^"]+)"', txt, re.DOTALL)
             if data:
-                _['date'] = data.group(1).strip()
+                _["date"] = data.group(1).strip()
             else:
                 raise AttributeError()
 
         datas_lst[0] = _
         datas_lst[idx] = _
 
-    with open(f"{DATA_DIRECTORY}/{sys.argv[0].split('/')[-1]}.csv", 'w') as f:
+    with open(f"{DATA_DIRECTORY}/{sys.argv[0].split('/')[-1]}.csv", "w") as f:
         dw = csv.DictWriter(f, fieldnames=list(datas_lst[0].keys()))
         dw.writeheader()
         dw.writerows(datas_lst)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     get_ckan()
