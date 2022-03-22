@@ -92,7 +92,6 @@ repos:
     -   id: debug-statements
     -   id: destroyed-symlinks
     -   id: detect-private-key
-    -   id: double-quote-string-fixer
     -   id: end-of-file-fixer
     -   id: file-contents-sorter
     -   id: fix-byte-order-marker
@@ -111,8 +110,7 @@ repos:
     rev: v1.0.5
     hooks:
     -   id: python-bandit-vulnerability-check
-        args:  [ "-s", "B402,B501"]
-
+        args:  [".", "--skip", "B402,B501","--recursive"]
 
 ci:
   autoupdate_commit_msg: 'ci: pre-commit-config update'
