@@ -40,7 +40,11 @@ lint:
 clean:
 	git rm --cached `git ls-files -i -c --exclude-from=.gitignore`
 
+certs:
+	sudo dpkg-reconfigure ca-certificates
+
 all:
+	make certs
 	make lint
 	make install
 	make examples

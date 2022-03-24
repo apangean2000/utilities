@@ -5,6 +5,7 @@
 # TODO URL Fix suggestions - did you mean?
 # TODO Certs
 # TODO Maybe add retries on FTP
+# TODO add domain sort to the ckan_url
 
 import csv
 import ftplib
