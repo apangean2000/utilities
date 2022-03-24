@@ -1,9 +1,7 @@
 """
 [WIP] Analyse dado_gov_br via ckan api + get site datasets
 """
-# TODO cacert https://github.com/anyant/rssant/search?q=cert
 # TODO URL Fix suggestions - did you mean?
-# TODO Certs
 # TODO Maybe add retries on FTP
 
 import csv
@@ -344,7 +342,6 @@ def fetch(
                 else:
                     builder.url(url)
 
-                # TODO add history to get the original undirected URL
                 built = builder.build()
 
                 out_dct = {attr: getattr(built, attr, None) for attr in built.__slots__}
@@ -569,10 +566,13 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
         writer = csv.DictWriter(fp, fieldnames=Response.__slots__)
         writer.writeheader()
 
-    urls_tmp = urls = []
+    urls_tmp: list[str] = []
+    urls: list[str] = []
 
     with open(file_url) as f:
-        urls_tmp = list({_["url"] for _ in list(csv.DictReader(f))}).sort()
+        _ = list({_["url"] for _ in list(csv.DictReader(f))})
+        if _:
+            urls_tmp = _.sort()
 
     for _ in urls_tmp:  # Prescreen for malformed up front
 
@@ -625,7 +625,6 @@ def uris_log(uris: list[URI], file_output: Path) -> None:
         builder = ResponseBuilder()
         builder.url(_.uri)
         built = builder.build()
-        # TODO add some error handle here
         csv_append(
             file_output,
             {attr: getattr(built, attr, None) for attr in built.__slots__},
@@ -678,7 +677,7 @@ def ckan_uri_scheme(session: requests.Session = None) -> bool:
         if (uri_posit.scheme is None or uri_posit.hostname is None) or (
             len(uri_posit.hostname) > 64
         ):
-            # TODO check this or url.port is None:
+
             raisenwrite = True
 
         else:
@@ -814,7 +813,6 @@ def ckan_uri_scheme(session: requests.Session = None) -> bool:
                         if files_dct[_.uri]["url_redirect"]:
                             builder.url_redirect(files_dct[_.uri]["url_redirect"])
 
-                        # TODO add history to get the original undirected URL
                         built = builder.build()
 
                         out_dct = {
