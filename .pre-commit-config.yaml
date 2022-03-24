@@ -1,11 +1,11 @@
-# Courtesy of https://github.com/ydataai/pandas-profiling/blob/develop/.pre-commit-config.yaml
+# Modified from https://github.com/ydataai/pandas-profiling/commit/5089a302bf6e6bc4f702014c30ab9c6962ebad3d
 
 repos:
 -   repo: https://github.com/psf/black
     rev: 21.12b0
     hooks:
     - id: black
-      language_version: python3.8
+      language_version: python3.10
 -   repo: https://github.com/nbQA-dev/nbQA
     rev: 1.2.2
     hooks:
@@ -24,12 +24,12 @@ repos:
     hooks:
       - id: isort
         files: '.*'
-        args: [ --profile=black, --project=pandas_profiling ]
+        args: [ --profile=black, --project=scripts ]
 -   repo: https://github.com/PyCQA/flake8
     rev: "4.0.1"
     hooks:
     -   id: flake8
-        args: [ "--ignore=E203,E501,W291,W503,SFS301,SIM106,SIM113,T001" ]
+        args: [ "--ignore=E501,SFS301,T001,SIM106,SIM113,E203" ]
         additional_dependencies:
           - flake8-comprehensions
           - flake8-sfs
@@ -41,7 +41,7 @@ repos:
     hooks:
     -   id: flake8
         name: flake8-annotations
-        args: [ "--select=ANN001,ANN201,ANN202,ANN205,ANN206,ANN301" ]
+        args: [ "--select=ANN001,ANN201,ANN202,ANN205,ANN206,ANN301","--suppress-none-returning" ]
         additional_dependencies:
           - flake8-annotations
         exclude: |
@@ -71,6 +71,46 @@ repos:
     hooks:
       - id: tryceratops
         args: ["-i", "TC003","--autofix"]
+-   repo: https://github.com/pre-commit/pre-commit-hooks.git
+    rev: v4.1.0
+    hooks:
+    -   id: check-added-large-files
+    -   id: check-ast
+    -   id: check-byte-order-marker
+    -   id: check-builtin-literals
+    -   id: check-case-conflict
+    -   id: check-executables-have-shebangs
+    -   id: check-json
+    -   id: check-shebang-scripts-are-executable
+    -   id: pretty-format-json
+    -   id: check-merge-conflict
+    -   id: check-symlinks
+    -   id: check-toml
+    -   id: check-vcs-permalinks
+    -   id: check-xml
+    -   id: check-yaml
+    -   id: debug-statements
+    -   id: destroyed-symlinks
+    -   id: detect-private-key
+    -   id: end-of-file-fixer
+    -   id: file-contents-sorter
+    -   id: fix-byte-order-marker
+    -   id: forbid-new-submodules
+    -   id: mixed-line-ending
+    -   id: name-tests-test
+    -   id: no-commit-to-branch
+    -   id: requirements-txt-fixer
+    -   id: sort-simple-yaml
+    -   id: trailing-whitespace
+-   repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    rev: v1.2.4
+    hooks:
+    -   id: python-safety-dependencies-check
+-   repo: https://github.com/Lucas-C/pre-commit-hooks-bandit
+    rev: v1.0.5
+    hooks:
+    -   id: python-bandit-vulnerability-check
+        args:  [".", "--skip", "B402,B501","--recursive"]
 
 ci:
   autoupdate_commit_msg: 'ci: pre-commit-config update'

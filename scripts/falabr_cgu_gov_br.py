@@ -14,9 +14,8 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import requests
-from tqdm import tqdm
-
 from pandas_profiling import ProfileReport
+from tqdm import tqdm
 
 pd.options.display.width = 0
 
@@ -31,11 +30,12 @@ def clear_data(directory: str) -> None:
 
     directory_p = Path(directory)
 
-    for item in directory_p.iterdir():
-        if item.is_dir():
-            clear_data(str(item))
-        else:
-            item.unlink()
+    if os.path.exists(directory_p):
+        for item in directory_p.iterdir():
+            if item.is_dir():
+                clear_data(str(item))
+            else:
+                item.unlink()
 
 
 def get_data() -> None:
