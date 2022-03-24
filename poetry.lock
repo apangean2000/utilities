@@ -1387,7 +1387,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "66bccfc7a38edd4d0ae0c7473dab1799172d62a0344db9a4e6050278a218db3b"
+content-hash = "3ef149c9f8be1abb6ad99dbabcdbf071bc49d2c26a7343fdf9664db3290f1b01"
 
 [metadata.files]
 appnope = [
