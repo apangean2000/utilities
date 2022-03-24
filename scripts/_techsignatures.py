@@ -1,6 +1,6 @@
 """
 [WIP][TODO] Find common technology signatures in hrefs
-#TODO add logging 
+#TODO add logging
 """
 
 import re

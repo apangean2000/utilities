@@ -5,11 +5,16 @@ description = ""
 authors = ["ellis ford <ellis.ford@datopian.com>"]
 
 [tool.poetry.dependencies]
-python = "3.8"
+python = "3.10.3"
 pandas-profiling = {extras = ["notebook"], version = "^3.1.0"}
 pandas = "^1.4.1"
 tqdm = "^4.63.0"
 pdoc3 = "^0.10.0"
+fuzzywuzzy = "^0.18.0"
+yarl = "^1.7.2"
+uri = "^2.0.1"
+ftpparser = "^0.0.3"
+certifi = "^2021.10.8"
 
 [tool.poetry.dev-dependencies]
 pre-commit = "^2.17.0"

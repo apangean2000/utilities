@@ -26,15 +26,22 @@ examples:
 	find ./examples -maxdepth 2 -type f -name "*.py" -execdir python {} \;
 
 install:
-	curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
+	curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | POETRY_UNINSTALL=1 python -
+	curl -sSL https://install.python-poetry.org | python3 -
 	poetry install
 	poetry shell
+
+update:
+	poetry update
 
 lint:
 	pre-commit run --all-files
 
 clean:
 	git rm --cached `git ls-files -i -c --exclude-from=.gitignore`
+
+certs:
+	sudo dpkg-reconfigure ca-certificates
 
 all:
 	make lint
