@@ -5,7 +5,6 @@
 # TODO URL Fix suggestions - did you mean?
 # TODO Certs
 # TODO Maybe add retries on FTP
-# TODO add domain sort to the ckan_url
 
 import csv
 import ftplib
@@ -573,7 +572,7 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
     urls_tmp = urls = []
 
     with open(file_url) as f:
-        urls_tmp = list({_["url"] for _ in list(csv.DictReader(f))})
+        urls_tmp = list({_["url"] for _ in list(csv.DictReader(f))}).sort()
 
     for _ in urls_tmp:  # Prescreen for malformed up front
 
