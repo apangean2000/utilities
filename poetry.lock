@@ -237,6 +237,14 @@ unicode = ["unicodedata2 (>=14.0.0)"]
 woff = ["zopfli (>=0.1.4)", "brotlicffi (>=0.8.0)", "brotli (>=1.0.1)"]
 
 [[package]]
+name = "ftpparser"
+version = "0.0.3"
+description = "FTP LIST parsing library"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
 name = "fuzzywuzzy"
 version = "0.18.0"
 description = "Fuzzy string matching in python"
@@ -1379,7 +1387,7 @@ multidict = ">=4.0"
 [metadata]
 lock-version = "1.1"
 python-versions = "3.10.3"
-content-hash = "642bcdabaccea6ec2cda42373d83281f14b771c6d49c57250d21d639b1117ed7"
+content-hash = "66bccfc7a38edd4d0ae0c7473dab1799172d62a0344db9a4e6050278a218db3b"
 
 [metadata.files]
 appnope = [
@@ -1555,6 +1563,10 @@ filelock = [
 fonttools = [
     {file = "fonttools-4.31.1-py3-none-any.whl", hash = "sha256:2b288eae806800668cb5cdf52a37b5ac701c5adda2dd5c88b685581ce3385285"},
     {file = "fonttools-4.31.1.zip", hash = "sha256:f8b35ed9ba189710994cec2c86b8eb5f0c49336698575e439a0d5671d3ca1ace"},
+]
+ftpparser = [
+    {file = "ftpparser-0.0.3-py3-none-any.whl", hash = "sha256:88b34c77c7a6c05005f0f22cf6b76ca27955438e1a91d3633fac3f842a9e3480"},
+    {file = "ftpparser-0.0.3.tar.gz", hash = "sha256:4bd00a6dab67cf67470ff816ad667f86747d262c04afa1f5dc2acc02181a0591"},
 ]
 fuzzywuzzy = [
     {file = "fuzzywuzzy-0.18.0-py2.py3-none-any.whl", hash = "sha256:928244b28db720d1e0ee7587acf660ea49d7e4c632569cad4f1cd7e68a5f0993"},

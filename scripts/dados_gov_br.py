@@ -2,14 +2,18 @@
 [WIP] Analyse dado_gov_br via ckan api + get site datasets
 """
 # TODO cacert https://github.com/anyant/rssant/search?q=cert
-# TODO FTP
-# TODO URL Fix suggestions - did you mean
-# TODO
+# TODO URL Fix suggestions - did you mean?
+# TODO Certs
+# TODO Maybe add retries on FTP
 
 import csv
+import ftplib
 import json
 import logging
+import mimetypes
 import os
+import re
+import socket
 import sys
 from copy import deepcopy
 from http import HTTPStatus
@@ -17,9 +21,11 @@ from pathlib import Path
 from time import sleep
 from typing import Optional, Union
 
+import ftpparser
 import requests
 from requests.structures import CaseInsensitiveDict
-from yarl import URL
+from uri import URI
+from yarl import URL  # TODO just use URI package buuut IDNA handling?
 
 logging.basicConfig(stream=sys.stdout, level=logging.ERROR)
 
@@ -602,5 +608,237 @@ def ckan_url(session: requests.Session = None) -> requests.Session:
     return session
 
 
+def uris_log(uris: list[URI], file_output: Path) -> None:
+    # TODO add status code in here perhaps
+    # For additional diagnostics
+    """
+    Log a list of URI classes
+
+    :param uris: list of URI classes
+    :type uris: list[URI]
+    :param file_output: file to send to
+    :type file_output: str
+    """
+
+    for _ in uris:
+        logging.error(f"Issue with {_.uri}")
+        builder = ResponseBuilder()
+        builder.url(_.uri)
+        built = builder.build()
+        # TODO add some error handle here
+        csv_append(
+            file_output,
+            {attr: getattr(built, attr, None) for attr in built.__slots__},
+        )
+
+
+def ckan_uri_scheme(session: requests.Session = None) -> bool:
+    """
+    Get endpoints from any scheme, should be deprecated whne ftp removed
+    # TODO return FTP status codes
+    :param session: _description_, defaults to None
+    :type session: requests.Session, optional
+    :raises Exception: _description_
+    :raises Exception: _description_
+    :raises Exception: _description_
+    :raises Exception: _description_
+    :return: _description_
+    :rtype: bool
+    """
+
+    file_input = Path(f"{DIRECTORY_DATA}/{sys.argv[0].split('/')[-1]}.csv")
+
+    file_output = Path(f"_{DIRECTORY_DATA}/{sys.argv[0].split('/')[-1]}.csv")
+
+    os.makedirs(DIRECTORY_DATA, exist_ok=True)
+
+    with open(file_output, mode="w") as fp:
+        writer = csv.DictWriter(fp, fieldnames=Response.__slots__)
+        writer.writeheader()
+
+    urls: list = []
+    uris: dict = {}
+
+    with open(file_input) as f:
+        # erroneously described as urls but stores uri's
+        urls = list({_["url"] for _ in list(csv.DictReader(f))})
+
+    for _ in urls:  # Prescreen for malformed up front
+
+        raisenwrite = False
+
+        try:
+            # https://github.com/marrow/uri
+            uri_posit = URI(_)
+
+        except ValueError:
+
+            raisenwrite = True
+
+        if (uri_posit.scheme is None or uri_posit.hostname is None) or (
+            len(uri_posit.hostname) > 64
+        ):
+            # TODO check this or url.port is None:
+            raisenwrite = True
+
+        else:
+            # Use this for ftp dir, improve dns
+            sans_qry_fragment = "/".join(uri_posit.uri.split("/")[:-1])
+
+            try:
+                uri_posit.scheme.name
+            except AttributeError:
+                raisenwrite = True
+
+            if raisenwrite is False:
+
+                if sans_qry_fragment not in uris:
+                    uris[sans_qry_fragment] = []
+
+                uris[sans_qry_fragment].append(uri_posit)
+
+        if raisenwrite:
+            logging.error(f"Issue with {_}")
+            builder = ResponseBuilder()
+            builder.url(_)
+            built = builder.build()
+            csv_append(
+                file_output,
+                {attr: getattr(built, attr, None) for attr in built.__slots__},
+            )
+
+    if session is None:
+        # Could check read of file for http / https,
+        # but just setup here
+        session = requests.Session()
+        session.headers.update({"User-Agent": USER_AGENT})
+
+    # We use this to infer encoding / type in ftp , again could check we have some requests L712
+    mimetypes.init()
+
+    for sans_qry_fragment, uri_by_paths in uris.items():
+
+        uri: URI = uri_by_paths[0]
+
+        scheme: str = uri.scheme.name.strip()
+
+        if scheme in ["ftp"]:
+
+            if (
+                re.search("ftp://ftp.hfa.mil.br", str(uri_by_paths[0].uri), re.DOTALL)
+                is None
+            ):
+                continue
+
+            # We just get first domain / path and search for files
+            hasconnect = False
+
+            try:
+                ftp = ftplib.FTP(
+                    host=uri.host,
+                    user=uri.username if uri.username else None,
+                    passwd=uri.password if uri.password else None,
+                    # https://bugs.python.org/issue30956
+                    timeout=REQUEST_TIMEOUT,
+                )
+                ftp.login()
+                hasconnect = True
+
+            except ftplib.all_errors as e:
+
+                if isinstance(e, socket.timeout):  # Not sure this is the best way
+
+                    uris_log(uri_by_paths, file_output)
+
+                else:
+                    raise
+
+            if hasconnect is True:  # TODO handle this better from above
+
+                files_dct: dict = {}
+                dir_list: list[str] = []
+
+                try:
+                    # Capture transient errors here
+                    if str(uri.path.parent) != "/":
+                        ftp.cwd(uri.path.parent)
+
+                    ftp.retrlines("LIST", dir_list.append)  # 'MLSD'?
+
+                except ftplib.all_errors:  # TODO to broad here
+                    uris_log(uri_by_paths, file_output)
+
+                ftp.quit()
+
+                parser = ftpparser.FTPParser()
+
+                # name, size, timestamp, isdirectory, downloadable, islink, permissions
+                files_dct = {
+                    f"{sans_qry_fragment}/{_[0]}": {
+                        "name": _[0],
+                        "size": _[1],
+                        "timestamp": _[2],
+                        "url_redirect": _[5],
+                    }
+                    for _ in parser.parse(dir_list)
+                    if _[3] == 0 and _[4] == 1
+                }
+
+                # Guess the file type and encoding, could download and inspect
+                # Buut FTP likely to be deprecated in future
+                for _ in files_dct:
+                    (
+                        files_dct[_]["mime_type"],
+                        files_dct[_]["encoding"],
+                    ) = mimetypes.guess_type(_)
+
+                # Just check file exists in expected location
+
+                for _ in uri_by_paths:
+
+                    if _.uri in files_dct:
+
+                        file = files_dct[_.uri]
+                        builder = ResponseBuilder()
+                        builder.url(_.uri)
+                        builder.status(200)
+                        builder.headers(
+                            CaseInsensitiveDict(
+                                {
+                                    "content-type": f"{file.get('mime_type','')};{file.get('encoding','')}",
+                                    "last_modified": file.get("timestamp", ""),
+                                }
+                            )
+                        )
+
+                        if files_dct[_.uri]["url_redirect"]:
+                            builder.url_redirect(files_dct[_.uri]["url_redirect"])
+
+                        # TODO add history to get the original undirected URL
+                        built = builder.build()
+
+                        out_dct = {
+                            attr: getattr(built, attr, None) for attr in built.__slots__
+                        }
+
+                        if file_output:
+                            csv_append(file_output, out_dct)
+                    else:
+                        uris_log([_], file_output)
+
+        elif scheme in ["http", "https"]:
+            for url in uri_by_paths:
+                fetch(
+                    session=session,
+                    url=url.uri,
+                    verb="HEAD",
+                    file_output=file_output,
+                )
+        else:
+            uris_log(uri_by_paths, file_output)
+
+    return True
+
+
 if __name__ == "__main__":
-    ckan_url()
+    ckan_uri_scheme()

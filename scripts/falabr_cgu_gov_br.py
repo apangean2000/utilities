@@ -14,9 +14,8 @@ from zipfile import ZipFile
 import numpy as np
 import pandas as pd
 import requests
-from tqdm import tqdm
-
 from pandas_profiling import ProfileReport
+from tqdm import tqdm
 
 pd.options.display.width = 0
 

@@ -24,7 +24,7 @@ repos:
     hooks:
       - id: isort
         files: '.*'
-        args: [ --profile=black, --project=pandas_profiling ]
+        args: [ --profile=black, --project=scripts ]
 -   repo: https://github.com/PyCQA/flake8
     rev: "4.0.1"
     hooks:
